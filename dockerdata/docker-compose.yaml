@@ -1,0 +1,17 @@
+version: '3'
+services:
+  flask:
+    build:
+      context: ..
+      dockerfile: dockerdata/Dockerfile
+    container_name: flask
+    ports:
+      - "5000:5000"
+    restart: always
+    command: sh -c "/app/start.sh"
+    networks:
+      - bridge_network
+
+networks:
+  bridge_network:
+    driver: bridge

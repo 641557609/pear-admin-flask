@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>日志详情</title>
+    {% include 'system/common/header.html' %}</head>
+<body>
+<form class="layui-form" action="">
+    <div class="mainBox">
+        <div class="main-container">
+            <div class="main-container">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">日志编号:</label>
+                    <div class="layui-input-block">
+                        <p style="display: flex; align-items: center; height: 38px;">{{ logger.logger_id }}</p>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">任务名称:</label>
+                    <div class="layui-input-block">
+                        <p style="display: flex; align-items: center; height: 38px;">{{ logger.task_name }}</p>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">任务类型:</label>
+                    <div class="layui-input-block">
+                        <p style="display: flex; align-items: center; height: 38px;">{{ logger.scheduled_task.task_template.template_type }}</p>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">执行SQL:</label>
+                    <div class="layui-input-block">
+                        <textarea class="layui-textarea" readonly>{{ logger.executed_sql }}</textarea>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">文件路径:</label>
+                    <div class="layui-input-block">
+                        <p style="display: flex; align-items: center; height: 38px;">{{ logger.result_path }}</p>
+                    </div>
+                </div>
+                {% if logger.error_detail %}
+                <div class="layui-form-item">
+                    <label class="layui-form-label">异常堆栈信息:</label>
+                    <div class="layui-input-block">
+                        <p style="display: flex; align-items: center; height: 38px;">{{ logger.error_detail }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</form>
+{% include 'system/common/footer.html' %}
+</body>
+</html>
