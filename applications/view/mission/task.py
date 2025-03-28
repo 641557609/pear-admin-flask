@@ -1,5 +1,7 @@
 # import traceback
 # traceback.print_exc()
+import datetime
+
 from applications.extensions import db
 from flask import Blueprint, render_template, request
 from sqlalchemy.orm import joinedload
@@ -310,7 +312,11 @@ def run_task(task_id):
             return fail_api(msg="任务不存在")
 
         # 调用调度器执行任务
-        scheduler.run_job(id=str(task.task_id))
+        my_job = scheduler.get_job(str(task.task_id))
+        if my_job:
+            scheduler.run_job(id=str(task.task_id))
+        else:
+            job(task_id=task.task_id, trigger_mode="手动执行")
 
         return success_api(msg="任务已执行完毕")
     except Exception as e:

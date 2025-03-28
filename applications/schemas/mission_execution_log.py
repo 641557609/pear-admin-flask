@@ -26,4 +26,4 @@ class ExecutionLogSchema(SQLAlchemyAutoSchema):
         elif obj.trigger_mode == 'by_user':
             return '手动触发'
         else:
-            return '出错啦'
+            return obj.trigger_mode

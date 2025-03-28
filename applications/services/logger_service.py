@@ -6,19 +6,20 @@ from applications.models import ScheduledTask, ExecutionLog
 class ExecutionLogger:
     """统一执行日志记录服务"""
 
-    def __init__(self, task_id: int):
+    def __init__(self, task_id: int, **kwargs):
         self.task_id = task_id
         self.log = ExecutionLog(
             task_id=task_id,
             run_time=datetime.now(),
             status='初始化',
-            trigger_mode='未知'
+            trigger_mode=kwargs.get('trigger_mode', '未知')
         )
 
     def _prepare_base_info(self, task: ScheduledTask):
         """准备基础任务信息"""
         self.log.task_name = task.task_name
-        self.log.trigger_mode = task.schedule_config.get('trigger_mode')
+        if self.log.trigger_mode == '未知':
+            self.log.trigger_mode = task.schedule_config.get('trigger_mode')
 
     def _record_sql(self, executed_sql: str):
         """记录执行的SQL"""

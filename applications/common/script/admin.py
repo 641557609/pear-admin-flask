@@ -585,6 +585,19 @@ powerdata = [
         create_time=now_time,
         enable=1,
 
+    ),Power(
+        id=64,
+        name='文件管理',
+        type='1',
+        code='mission:file:main',
+        url='/mission/file/',
+        open_type='_iframe',
+        parent_id='60',
+        icon='',
+        sort=4,
+        create_time=now_time,
+        enable=1,
+
     ),
 
 ]

@@ -118,4 +118,4 @@ class BaseConfig:
     # 设置定时任务的执行器（默认是最大执行数量为10的线程池）
     SCHEDULER_EXECUTORS = {'default': {'type': 'threadpool', 'max_workers': 10}}
     # 另外flask-apscheduler内有日志记录器。name为apscheduler.scheduler和apscheduler.executors.default。如果需要保存日志，则需要对此日志记录器进行配置
-    JSONIFY_PRETTYPRINT_REGULAR = True
+    JSONIFY_PRETTYPRINT_REGULAR = False

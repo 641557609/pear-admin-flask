@@ -31,10 +31,10 @@ notification_service = NotificationService()
 variable_handler = VariableHandler()
 
 
-def job(task_id):
+def job(task_id, **kwargs):
     start_time = datetime.now()
     with scheduler.app.app_context():
-        logger = ExecutionLogger(task_id)
+        logger = ExecutionLogger(task_id, **kwargs)
         try:
             task = ScheduledTask.query.options(selectinload(ScheduledTask.employees)).filter_by(task_id=task_id).first()
             task_template = task.task_template
