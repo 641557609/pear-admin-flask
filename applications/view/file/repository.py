@@ -56,4 +56,4 @@ def table_data():
             files.append(file_data)
 
 
-    return table_api(data=files, count=len(files))
+    return table_api(data=files, count=len(files), limit=20)

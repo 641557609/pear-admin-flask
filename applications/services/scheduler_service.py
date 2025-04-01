@@ -137,7 +137,6 @@ def send_report_with_retry(file_path, receivers, max_retries=BaseConfig.NOTIFICA
             print(f"发送失败，第{attempt + 1}次重试: {send_result.get('message', '未知错误')}")
         except Exception as e:
             print(f"发送异常: {str(e)}")
-    return send_result
 
 
 def process_report_generation(task, query_results):
