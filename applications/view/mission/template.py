@@ -134,7 +134,7 @@ def update():
     data = {
         "template_name": str_escape(req.get("template_name")),  # 模板名称
         "template_type": str_escape(req.get("template_type")),  # 任务类型
-        "sql_template": str_escape(req.get("sql_template")),  # 原始sql
+        "sql_template": req.get("sql_template"),  # 原始sql
         "remark": str_escape(req.get("remark"))  # 备注
     }
 

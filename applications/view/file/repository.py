@@ -23,6 +23,8 @@ def download_file(filename):
 @bp.get('/data')
 @authorize("mission:file:main")
 def table_data():
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 10))
     file_name = request.args.get('file_name', '').strip()
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
@@ -54,6 +56,10 @@ def table_data():
                     continue
 
             files.append(file_data)
+    total = len(files)
+    start = (page - 1) * limit
+    end = start + limit
+    page_files = files[start:end]
 
 
-    return table_api(data=files, count=len(files), limit=20)
+    return table_api(data=page_files, count=total)

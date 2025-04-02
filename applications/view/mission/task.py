@@ -2,6 +2,8 @@
 # traceback.print_exc()
 import datetime
 
+from apscheduler.job import Job
+
 from applications.extensions import db
 from flask import Blueprint, render_template, request
 from sqlalchemy.orm import joinedload
@@ -312,11 +314,7 @@ def run_task(task_id):
             return fail_api(msg="任务不存在")
 
         # 调用调度器执行任务
-        my_job = scheduler.get_job(str(task.task_id))
-        if my_job:
-            scheduler.run_job(id=str(task.task_id))
-        else:
-            job(task_id=task.task_id, trigger_mode="手动执行")
+        job(task_id=task.task_id, trigger_mode="手动执行")
 
         return success_api(msg="任务已执行完毕")
     except Exception as e:
@@ -331,7 +329,9 @@ def enable():
         role = ScheduledTask.query.filter_by(task_id=task_id).update({"enable": 1})
         if role:
             db.session.commit()
-            scheduler.resume_job(task_id)
+            get_job = scheduler.get_job(task_id)
+            if get_job:
+                scheduler.resume_job(task_id)
             return success_api(msg="任务已开启")
         return fail_api(msg="出错啦")
     return fail_api(msg="数据错误")
@@ -346,7 +346,9 @@ def dis_enable():
         role = ScheduledTask.query.filter_by(task_id=task_id).update({"enable": 0})
         if role:
             db.session.commit()
-            scheduler.pause_job(task_id)
+            get_job = scheduler.get_job(task_id)
+            if get_job:
+                scheduler.pause_job(task_id)
             return success_api(msg="任务已暂停")
         return fail_api(msg="出错啦")
     return fail_api(msg="数据错误")
