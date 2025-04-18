@@ -45,6 +45,12 @@ class VariableHandler:
         next_year = current_year if current_month < 12 else current_year + 1
         next_month_start, next_month_end = self.get_first_and_last_day_of_month(next_year, next_month)
 
+        # 获取两个月前的月初和月末
+        if now.month <= 2:
+            last_two_month_start, last_two_month_end = self.get_first_and_last_day_of_month(current_year - 1,now.month + 10)
+        else:
+            last_two_month_start, last_two_month_end = self.get_first_and_last_day_of_month(current_year, now.month - 2)
+
         # 去年年份
         last_year = now.year - 1
 
@@ -63,6 +69,7 @@ class VariableHandler:
         date_dict = {"MonthStart": month_start, "MonthEnd": month_end, "LastMonthStart": last_month_start,
                   "LastMonthEnd": last_month_end, "NextMonthStart": next_month_start, "NextMonthEnd": next_month_end,
                   "LastYearToday": last_year_today, "LastYearMonthStart": last_year_month_start,
+                  "LastTwoMonthStart":last_two_month_start,"LastTwoMonthEnd":last_two_month_end,
                   "LastYearMonthEnd": last_year_month_end, "LastYearLastMonthStart": last_year_last_month_start,
                   "LastYearLastMonthEnd": last_year_last_month_end}
 

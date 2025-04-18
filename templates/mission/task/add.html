@@ -290,7 +290,8 @@
                     <select name="${variableName}_value" lay-verify="required" lay-search>
                         <option value="">请选择动态时间</option>
                         ${['MonthStart:本月初', 'MonthEnd:本月末', 'LastMonthStart:上月初', 'LastMonthEnd:上月末',
-                        'NextMonthStart:下月初', 'NextMonthEnd:下月末', 'LastYearToday:去年今天', 'LastYearMonthStart:去年今月月初',
+                        'NextMonthStart:下月初', 'NextMonthEnd:下月末', 'LastTwoMonthStart:两月前月初', 'LastTwoMonthEnd:两月前月末',
+                        'LastYearToday:去年今天', 'LastYearMonthStart:去年今月月初',
                         'LastYearMonthEnd:去年今月月末', 'LastYearLastMonthStart:去年上月月初', 'LastYearLastMonthEnd:去年上月月末'
                         ]
                             .map(opt => {

@@ -23,7 +23,7 @@ class ExecutionLogger:
 
     def _record_sql(self, executed_sql: str):
         """记录执行的SQL"""
-        self.log.executed_sql = executed_sql[:4000]
+        self.log.executed_sql = executed_sql
 
     def _record_success(self, result_path: str = None):
         """记录成功状态"""
