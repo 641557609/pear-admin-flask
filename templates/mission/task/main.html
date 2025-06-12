@@ -70,8 +70,10 @@
 </script>
 
 <script type="text/html" id="task-enable">
+    {% if authorize("mission:task:remove") %}
     <input type="checkbox" name="enable" value="{{ "{{d.task_id}}" }}" lay-skin="switch" lay-text="启用|禁用"
            lay-filter="task-enable" {{ "{{# if(d.enable==1){ }} checked {{# } }}" }} >
+    {% endif %}
 </script>
 
 <script>

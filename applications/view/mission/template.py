@@ -14,13 +14,13 @@ bp = Blueprint('template', __name__, url_prefix='/template')
 
 # 首页
 @bp.get('/')
-@authorize("mission:template:main")
+@authorize("mission:template:main", log=True)
 def main():
     return render_template('mission/template/main.html')
 
 # 表格数据
 @bp.get('/data')
-@authorize("mission:template:main")
+@authorize("mission:template:main", log=True)
 def table():
     template_name = str_escape(request.args.get('template_name', type=str))
     creator = str_escape(request.args.get('creator', type=str))
@@ -43,7 +43,7 @@ def add():
 
 # 模板增加
 @bp.post('/save')
-@authorize("mission:template:save", log=True)
+@authorize("mission:template:add", log=True)
 def save():
     req = request.get_json(force=True)
 

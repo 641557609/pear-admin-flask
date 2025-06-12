@@ -20,7 +20,7 @@ def main():
 
 # 表格数据
 @bp.get('/data')
-@authorize("mission:task:main")
+@authorize("mission:logger:main", log=True)
 def table():
     task_name = str_escape(request.args.get('task_name', type=str))
     start_date = str_escape(request.args.get('start_date', type=str))

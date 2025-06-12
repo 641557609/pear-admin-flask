@@ -6,6 +6,7 @@ scheduler = APScheduler()
 def init_scheduler(app: Flask):
     scheduler.init_app(app)
     from applications.tasks import update_employees
+    from applications.tasks import clean_file
     scheduler.start()
     # 添加调度器事件
     # scheduler.add_listener(任务函数名, 事件类型)

@@ -8,20 +8,20 @@ from applications.common.utils.http import table_api
 bp = Blueprint('repository', __name__, url_prefix='/repository')
 
 @bp.get('/')
-@authorize("mission:file:main")
+@authorize("mission:file:main", log=True)
 def main():
     return render_template('file/repository/main.html')
 
 # 添加下载路由
 @bp.get('/download/<filename>')
-@authorize("mission:file:download")
+@authorize("mission:file:download", log=True)
 def download_file(filename):
     directory = os.path.join(current_app.root_path, 'custom_reports')
     return send_from_directory(directory, filename, as_attachment=True)
 
 
 @bp.get('/data')
-@authorize("mission:file:main")
+@authorize("mission:file:main", log=True)
 def table_data():
     page = int(request.args.get('page', 1))
     limit = int(request.args.get('limit', 10))

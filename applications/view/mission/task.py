@@ -1,9 +1,3 @@
-# import traceback
-# traceback.print_exc()
-import datetime
-
-from apscheduler.job import Job
-
 from applications.extensions import db
 from flask import Blueprint, render_template, request
 from sqlalchemy.orm import joinedload
@@ -23,14 +17,14 @@ bp = Blueprint('task', __name__, url_prefix='/task')
 
 # 首页
 @bp.get('/')
-@authorize("mission:task:main")
+@authorize("mission:task:main", log=True)
 def main():
     return render_template('mission/task/main.html')
 
 
 # 表格数据
 @bp.get('/data')
-@authorize("mission:task:main")
+@authorize("mission:task:main", log=True)
 def table():
     task_name = str_escape(request.args.get('task_name', type=str))
     template_name = str_escape(request.args.get('template_name', type=str))
@@ -77,7 +71,7 @@ def add(id=None):
 
 # 任务增加
 @bp.post('/save')
-@authorize("mission:task:save", log=True)
+@authorize("mission:task:add", log=True)
 def save():
     req = request.get_json(force=True)
     try:
