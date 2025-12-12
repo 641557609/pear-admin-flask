@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% include 'system/common/header.html' %}
+    <style>
+        .pear-container {
+            background-color: white;
+        }
+
+        body {
+            margin: 10px;
+        }
+
+        .file-info {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #e6e6e6;
+            border-radius: 2px;
+            background-color: #f8f8f8;
+        }
+
+        .file-info.hidden {
+            display: none;
+        }
+
+        .upload-status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 2px;
+            display: none;
+        }
+
+        .upload-status.success {
+            background-color: #f0f9ff;
+            border: 1px solid #91d5ff;
+            color: #1890ff;
+        }
+
+        .upload-status.error {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+        }
+
+        .retry-button {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-row layui-col-space15">
+    <div class="layui-col-md12">
+        <div class="layui-card">
+            <div class="layui-tab-content">
+                <fieldset class="layui-elem-field layui-field-title">
+                    <legend>上传Excel文件</legend>
+                </fieldset>
+                <form class="layui-form edit-form">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">
+                            选择文件
+                        </label>
+                        <div class="layui-input-block">
+                            <button type="button" class="layui-btn layui-btn-normal" id="excel-file">选择Excel文件</button>
+                            <span style="margin-left: 10px; color: #666;">支持xls, xlsx, csv格式</span>
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">
+                            文件描述
+                        </label>
+                        <div class="layui-input-block">
+                            <input type="text" name="description" placeholder="请输入文件描述（可选）" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">
+                        </label>
+                        <div class="layui-input-block">
+                            <button type="button" class="layui-btn" id="excel-upload-button">开始上传</button>
+                            <button type="button" class="layui-btn layui-btn-primary" id="cancel-button" onclick="parent.layer.close(parent.layer.getFrameIndex(window.name))">取消</button>
+                            <button type="button" class="layui-btn layui-btn-warning retry-button" id="retry-button" style="display: none;">重新上传</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div id="file-info" class="file-info hidden">
+                    <div><strong>文件信息：</strong></div>
+                    <div>文件名：<span id="file-name"></span></div>
+                    <div>文件大小：<span id="file-size"></span></div>
+                    <div>文件类型：<span id="file-type"></span></div>
+                </div>
+
+                <div id="upload-status" class="upload-status hidden">
+                    <span id="status-message"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'system/common/footer.html' %}
+<script>
+    layui.use(['jquery', 'element', 'form', 'upload'], function () {
+        var $ = layui.jquery;
+        var element = layui.element;
+        var form = layui.form;
+        var upload = layui.upload;
+
+        var uploadInst = null; // 上传实例
+
+        // 初始化上传组件
+        function initUpload() {
+            uploadInst = upload.render({
+                elem: '#excel-file'
+                , url: '/file/excel/upload'
+                , auto: false
+                , multiple: false // 限制一次只能选择一个文件
+                , accept: 'file'
+                , exts: 'xls|xlsx|csv'
+                , size: 50 * 1024 // 50MB
+                , choose: function(obj) {
+                    // 重置状态
+                    resetUploadStatus();
+
+                    // 先清空之前的文件
+                    obj.preview(function(index, file, result){
+                        // 显示文件信息
+                        $('#file-name').text(file.name);
+                        $('#file-size').text(formatFileSize(file.size));
+                        $('#file-type').text(file.type || '未知');
+                        $('#file-info').removeClass('hidden');
+
+                        // 启用上传按钮
+                        $('#excel-upload-button').prop('disabled', false);
+                    });
+                }
+                , bindAction: '#excel-upload-button'
+                , before: function(obj) {
+                    // 显示上传进度条
+                    this.data = {
+                        description: $('input[name="description"]').val()
+                    };
+                    showUploadStatus('正在上传...', 'info');
+                    $('#excel-upload-button').prop('disabled', true);
+                    $('#retry-button').hide(); // 隐藏重新上传按钮
+                }
+                , progress: function(n) {
+                    // 显示上传进度
+                    var percent = n + '%';
+                    showUploadStatus('上传进度: ' + percent, 'info');
+                }
+                , done: function (res) {
+                    layer.closeAll();
+                    if (res.success) {
+                        showUploadStatus(res.msg, 'success');
+                        setTimeout(function() {
+                            try {
+                                // 先刷新表格
+                                if (window.parent && window.parent.layui && window.parent.layui.table) {
+                                    window.parent.layui.table.reload('dataTable');
+                                }
+                            } catch (e) {
+                                console.warn('表格刷新失败:', e);
+                            }
+
+                            // 然后关闭窗口
+                            try {
+                                parent.layer.close(parent.layer.getFrameIndex(window.name));
+                            } catch (e) {
+                                console.warn('窗口关闭失败:', e);
+                            }
+                        }, 1000);
+                    } else {
+                        showUploadStatus(res.msg, 'error');
+                        showRetryButton();
+                    }
+                    $('#excel-upload-button').prop('disabled', false);
+                }
+                , error: function(index, upload) {
+                    layer.closeAll();
+                    showUploadStatus('上传失败，网络错误或服务器异常', 'error');
+                    showRetryButton();
+                    $('#excel-upload-button').prop('disabled', false);
+                }
+            });
+        }
+
+        // 显示上传状态
+        function showUploadStatus(message, type) {
+            var $status = $('#upload-status');
+            var $message = $('#status-message');
+
+            $status.removeClass('hidden success error');
+            $status.addClass(type);
+            $message.text(message);
+            $status.show();
+        }
+
+        // 显示重新上传按钮
+        function showRetryButton() {
+            $('#retry-button').show();
+        }
+
+        // 隐藏重新上传按钮
+        function hideRetryButton() {
+            $('#retry-button').hide();
+        }
+
+        // 重置上传状态
+        function resetUploadStatus() {
+            $('#upload-status').addClass('hidden').hide();
+            hideRetryButton();
+            $('#excel-upload-button').prop('disabled', false);
+        }
+
+        // 重新上传功能 - 使用官方推荐的 inst.upload() 方法
+        $('#retry-button').on('click', function() {
+            if (uploadInst) {
+                // 重置状态
+                resetUploadStatus();
+
+                // 使用官方推荐的重新上传方法
+                uploadInst.upload(); // 无需传递参数，自动重新上传已选择的文件
+            } else {
+                layer.msg('请先选择文件', {icon: 2});
+            }
+        });
+
+        // 取消按钮点击事件
+        $('#cancel-button').on('click', function() {
+            parent.layer.close(parent.layer.getFrameIndex(window.name));
+        });
+
+        // 初始化上传组件
+        initUpload();
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            var k = 1024;
+            var sizes = ['B', 'KB', 'MB', 'GB'];
+            var i = Math.floor(Math.log(bytes) / Math.log(k));
+            return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+        }
+    });
+</script>
+</body>
+</html>

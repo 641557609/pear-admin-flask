@@ -17,9 +17,13 @@ class BaseConfig:
     ]
 
     # 上传图片目标文件夹
-    UPLOADED_PHOTOS_DEST = 'static/upload'
+    UPLOADED_PHOTOS_DEST = 'static/upload/'
     UPLOADED_FILES_ALLOW = ['gif', 'jpg', 'jpeg', 'png', 'webp']
     UPLOADS_AUTOSERVE = True
+
+    # 上传Excel文件目标文件夹
+    UPLOADED_EXCELFILES_DEST   = 'static/excel/'
+    UPLOADED_EXCELFILES_ALLOW   = ['xlsx', 'xls', 'csv']
 
     # 生成文件保存路径
     REPORT_OUTPUT_DIR = "custom_reports"
@@ -49,10 +53,10 @@ class BaseConfig:
 
     # mysql 配置
     MYSQL_USERNAME = "root"
-    MYSQL_PASSWORD = "ffp20011107"
+    MYSQL_PASSWORD = "123456"
     MYSQL_HOST = "127.0.0.1"
     MYSQL_PORT = 3306
-    MYSQL_DATABASE = "PearAdminFlask"
+    MYSQL_DATABASE = "PearAdminFlask2"
     # 数据库的配置信息
     SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MYSQL_USERNAME}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}?charset=utf8mb4"
 

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Excel文件管理</title>
+    {% include 'system/common/header.html' %}
+</head>
+<body class="pear-container">
+<div class="layui-card">
+    <div class="layui-card-body">
+        <table id="dataTable" lay-filter="dataTable"></table>
+    </div>
+    <div class="layui-card-body">
+        <div class="layui-btn-group">
+            <button type="button" class="layui-btn layui-btn-normal layui-btn-sm" id="consistency-check">
+                <i class="layui-icon">&#xe615;</i> 检查文件一致性
+            </button>
+            <button type="button" class="layui-btn layui-btn-warm layui-btn-sm" id="repair-inconsistencies">
+                <i class="layui-icon">&#xe640;</i> 修复不一致项
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/html" id="toolbar">
+    {% if authorize("system:excel:add") %}
+        <button class="layui-btn layui-btn-primary layui-btn-sm" lay-event="add">
+            <i class="layui-icon layui-icon-add-1"></i>
+            上传Excel
+        </button>
+    {% endif %}
+    {% if authorize("system:excel:delete") %}
+        <button class="layui-btn layui-btn-sm" lay-event="batchRemove">
+            <i class="layui-icon layui-icon-delete"></i>
+            批量删除
+        </button>
+    {% endif %}
+</script>
+
+<script type="text/html" id="excel-bar">
+    {% if authorize("system:excel:delete") %}
+        <button class="layui-btn layui-btn-danger layui-btn-sm" lay-event="remove"><i
+                class="layui-icon layui-icon-delete"></i>删除</button>
+    {% endif %}
+    {% if authorize("system:excel:download") %}
+        <button class="layui-btn layui-btn-normal layui-btn-sm" lay-event="download"><i
+                class="layui-icon layui-icon-download"></i>下载</button>
+    {% endif %}
+</script>
+
+{% include 'system/common/footer.html' %}
+<script>
+  layui.use(['table', 'form', 'jquery'], function () {
+    let table = layui.table
+    let form = layui.form
+    let $ = layui.jquery
+
+    let cols = [
+      [
+        {
+          type: 'checkbox'
+        },
+        {
+          field: 'id',
+          title: 'ID',
+          sort: true,
+          align: 'center',
+          unresize: true,
+          width: 80
+        },
+        {
+          field: 'original_name',
+          title: '原始文件名',
+          unresize: true,
+          align: 'center'
+        },
+        {
+          field: 'name',
+          title: '存储文件名',
+          unresize: true,
+          align: 'center'
+        },
+        {
+          field: 'mime',
+          title: '文件类型',
+          unresize: true,
+          align: 'center'
+        },
+        {
+          field: 'size',
+          title: '文件大小',
+          templet: function(d) {
+            if(d.size > 1024 && d.size < 1024*1024) {
+              return (d.size/1024).toFixed(2) + "KB"
+            } else if (d.size > 1024*1024){
+              return (d.size/1024/1024).toFixed(2) + "MB"
+            } else {
+              return d.size + "B"
+            }
+          },
+          unresize: true,
+          align: 'center'
+        },
+        {
+          field: 'description',
+          title: '文件描述',
+          unresize: true,
+          align: 'center'
+        },
+        {
+          field: 'upload_time',
+          title: '上传时间',
+          templet: d => layui.util.toDateString(d.upload_time,  "yyyy-MM-dd HH:mm:ss"),
+          unresize: true,
+          align: 'center'
+        },
+        {
+          field: 'status',
+          title: '状态',
+          unresize: true,
+          align: 'center',
+          templet: function(d) {
+            return d.status === 1 ? '<span class="layui-badge layui-bg-green">启用</span>' : '<span class="layui-badge layui-bg-gray">禁用</span>'
+          }
+        },
+        {
+          title: '操作',
+          toolbar: '#excel-bar',
+          align: 'center',
+          unresize: true,
+          width: 200
+        }
+      ]
+    ]
+
+    table.render({
+      elem: '#dataTable',
+      url: '/file/excel/list',
+      page: true,
+      cols: cols,
+      skin: 'line',
+      toolbar: '#toolbar',
+      defaultToolbar: [{
+        layEvent: 'refresh',
+        icon: 'layui-icon-refresh',
+      }, 'filter', 'print', 'exports']
+    })
+
+    table.on('tool(dataTable)', function (obj) {
+      if (obj.event === 'remove') {
+        window.remove(obj)
+      } else if (obj.event === 'download') {
+        window.download(obj)
+      }
+    })
+
+    table.on('toolbar(dataTable)', function (obj) {
+      if (obj.event === 'add') {
+        window.add()
+      } else if (obj.event === 'refresh') {
+        window.refresh()
+      } else if (obj.event === 'batchRemove') {
+        window.batchRemove(obj)
+      }
+    })
+
+    //弹出窗设置 自己设置弹出百分比
+    function screen () {
+      if (typeof width !== 'number' || width === 0) {
+        width = $(window).width() * 0.6
+      }
+      if (typeof height !== 'number' || height === 0) {
+        height = $(window).height() * 0.6
+      }
+      return [width + 'px', height + 'px']
+    }
+
+    window.add = function () {
+      layer.open({
+        type: 2,
+        maxmin: true,
+        title: '上传Excel文件',
+        shade: 0.1,
+        area: screen(),
+        content: '/file/excel/upload'
+      })
+    }
+
+    window.remove = function (obj) {
+      layer.confirm('确定要删除该Excel文件吗？', {
+        icon: 3,
+        title: '提示'
+      }, function (index) {
+        layer.close(index)
+        let loading = layer.load()
+        $.ajax({
+          url: '/file/excel/delete/' + obj.data.id,
+          type: 'DELETE',
+          success: function (res) {
+            layer.close(loading)
+            if (res.success) {
+              layer.msg(res.msg, {
+                icon: 1,
+                time: 1000
+              }, function () {
+                obj.del()
+              })
+            } else {
+              layer.msg(res.msg, {
+                icon: 2,
+                time: 1000
+              })
+            }
+          }
+        })
+      })
+    }
+
+    window.download = function (obj) {
+      // 创建下载链接
+      var downloadLink = document.createElement('a');
+      downloadLink.href = obj.data.href;
+      // 添加链接到DOM并触发点击
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    }
+
+    window.batchRemove = function (obj) {
+      let data = table.checkStatus(obj.config.id).data
+      if (data.length === 0) {
+        layer.msg('未选中数据', {
+          icon: 3,
+          time: 1000
+        })
+        return false
+      }
+      var ids = []
+      var hasCheck = table.checkStatus('dataTable')
+      var hasCheckData = hasCheck.data
+      if (hasCheckData.length > 0) {
+        $.each(hasCheckData, function (index, element) {
+          ids.push(element.id)
+        })
+      }
+      layer.confirm('确定要删除这些Excel文件吗？', {
+        icon: 3,
+        title: '提示'
+      }, function (index) {
+        layer.close(index)
+        let loading = layer.load()
+        $.ajax({
+          url: '/file/excel/batch_delete',
+          data: { ids: ids },
+          dataType: 'json',
+          type: 'POST',
+          success: function (res) {
+            layer.close(loading)
+            if (res.success) {
+              layer.msg(res.msg, {
+                icon: 1,
+                time: 1000
+              }, function () {
+                table.reload('dataTable')
+              })
+            } else {
+              layer.msg(res.msg, {
+                icon: 2,
+                time: 1000
+              })
+            }
+          }
+        })
+      })
+    }
+
+    window.refresh = function () {
+      table.reload('dataTable')
+    }
+
+    // 添加一致性检查功能
+    $('#consistency-check').on('click', function() {
+        layer.load(2);
+        $.ajax({
+            url: '/file/excel/consistency_check',
+            type: 'GET',
+            success: function(res) {
+                layer.closeAll('loading');
+                if (res.success) {
+                    if (res.count === 0) {
+                        layer.msg('文件一致性检查完成，未发现不一致项', {icon: 1});
+                    } else {
+                        var html = '<div style="max-height: 300px; overflow-y: auto;">';
+                        html += '<p>发现 ' + res.count + ' 个不一致项：</p>';
+                        res.data.forEach(function(item) {
+                            html += '<p style="color: #ff5722;">';
+                            if (item.type === 'missing_file') {
+                                html += '❌ 文件不存在但数据库记录存在: ' + item.original_name;
+                            } else {
+                                html += '⚠️ 文件存在但无数据库记录: ' + item.filename;
+                            }
+                            html += '</p>';
+                        });
+                        html += '</div>';
+                        layer.open({
+                            type: 1,
+                            title: '文件一致性检查结果',
+                            area: ['500px', '400px'],
+                            content: html
+                        });
+                    }
+                } else {
+                    layer.msg(res.msg, {icon: 2});
+                }
+            },
+            error: function() {
+                layer.closeAll('loading');
+                layer.msg('检查失败，请重试', {icon: 2});
+            }
+        });
+    });
+
+    $('#repair-inconsistencies').on('click', function() {
+        layer.confirm('确定要修复文件不一致项吗？此操作将删除无效的数据库记录和孤立文件。', function(index) {
+            layer.load(2);
+            $.ajax({
+                url: '/file/excel/repair_inconsistencies',
+                type: 'POST',
+                success: function(res) {
+                    layer.closeAll('loading');
+                    if (res.success) {
+                        layer.msg(res.msg, {icon: 1});
+                        // 刷新表格
+                        table.reload('dataTable');
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                },
+                error: function() {
+                    layer.closeAll('loading');
+                    layer.msg('修复失败，请重试', {icon: 2});
+                }
+            });
+            layer.close(index);
+        });
+    });
+  })
+
+
+</script>
+</body>
+</html>

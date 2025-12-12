@@ -9,6 +9,7 @@ from .init_migrate import init_migrate
 from .init_session import init_session
 from .init_plugins import register_plugin, broadcast_execute
 from .init_apscheduler import init_scheduler
+from .init_excel_upload import init_excel_upload
 
 def init_plugs(app: Flask) -> None:
     # 注册插件
@@ -23,6 +24,7 @@ def init_plugs(app: Flask) -> None:
     init_migrate(app)
     init_session(app)
     init_scheduler(app)
+    init_excel_upload(app)
 
     # 系统蓝图相关
     init_template_directives(app)

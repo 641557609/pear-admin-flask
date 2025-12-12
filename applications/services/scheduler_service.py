@@ -118,8 +118,8 @@ def process_template_results(executed_template, title_list, sheet_num, variables
             else:
                 query_results.setdefault(title_list, []).append(result)
         except Exception as e:
-            print(f"执行模板失败: {template}\n错误信息: {str(e)}")
-            raise
+            # print(f"执行模板失败: {template}\n错误信息: {str(e)}")
+            raise e
     return query_results
 
 
@@ -134,9 +134,10 @@ def send_report_with_retry(file_path, receivers, max_retries=BaseConfig.NOTIFICA
             )
             if send_result["success"] or send_result.get('message') == '推送完成':
                 return send_result
-            print(f"发送失败，第{attempt + 1}次重试: {send_result.get('message', '未知错误')}")
-        except Exception as e:
-            print(f"发送异常: {str(e)}")
+            # print(f"发送失败，第{attempt + 1}次重试: {send_result.get('message', '未知错误')}")
+        except Exception:
+            continue
+    return {"success": False, "message": "发送失败，超过最大重试次数"}
 
 
 def process_report_generation(task, query_results):
@@ -149,10 +150,10 @@ def process_report_generation(task, query_results):
 
     try:
         report_path = generator.generate(datas=query_results, filename=file_name, max_col_width=40)
-        print(f"生成主文件: {report_path}")
+        # print(f"生成主文件: {report_path}")
         return report_path
     except Exception as e:
-        print(f"文件生成失败: {str(e)}")
+        # print(f"文件生成失败: {str(e)}")
         raise
 
 
@@ -167,6 +168,7 @@ def process_report_sending(task, report_path):
     handle_send_result(main_send_result)
 
     # 处理分拆文件
+    # 获取拆分列
     column_name = file_config.get("column_name")
     if column_name is not None:
         try:
