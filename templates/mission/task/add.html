@@ -141,6 +141,24 @@
                         </div>
                     </div>
                     <div class="layui-form-item">
+                        <label class="layui-form-label"><b>是否使用模板</b></label>
+                        <div class="layui-input-block">
+                            <input type="radio" name="use_excel_template" value="0" title="否" lay-filter="excel_template" checked>
+                            <input type="radio" name="use_excel_template" value="1" title="是" lay-filter="excel_template">
+                        </div>
+                    </div>
+                    <div class="layui-form-item" id="excel_template_container" style="display: none;">
+                        <label class="layui-form-label"><b>选择模板</b></label>
+                        <div class="layui-input-block">
+                            <select name="excel_template_id" lay-search>
+                                <option value="">请选择Excel模板</option>
+                                {% for excel in excel_templates %}
+                                <option value="{{ excel.id }}">{{ excel.original_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
                         <label class="layui-form-label"><b>选择接收人</b></label>
                         <div class="layui-input-block">
                             <div id="transfer-employee"></div>
@@ -533,6 +551,17 @@
             parent.layer.close(parent.layer.getFrameIndex(window.name))//关闭当前页
             return false;
         })
+
+        // Excel模板切换
+        form.on('radio(excel_template)', function(data){
+            const useTemplate = data.value === '1';
+            if (useTemplate) {
+                $('#excel_template_container').show();
+            } else {
+                $('#excel_template_container').hide();
+            }
+            form.render();
+        });
     })
 </script>
 </body>

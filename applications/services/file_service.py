@@ -1,10 +1,13 @@
 # 用于生成Excel并存储的模块
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 from openpyxl.utils import get_column_letter
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
+
 
 
 class ExcelGenerator:
@@ -29,7 +32,8 @@ class ExcelGenerator:
             self,
             datas: Dict[str, List[List[Dict[str, list]]]],
             filename: str = None,
-            max_col_width: int = 60
+            max_col_width: int = 60,
+            template_path: Optional[str] = None
     ) -> Path:
         """
         生成Excel文件核心方法
@@ -43,13 +47,43 @@ class ExcelGenerator:
         }
         filename: 指定文件名（自动添加时间戳）
         max_col_width: 最大列宽限制
+        template_path: 模板文件路径（可选），如果有模板则在模板基础上新建sheet，否则创建新文件
         """
-        wb = Workbook()
-        self._remove_default_sheet(wb)
+        if template_path:
+            template_path = Path(__file__).resolve().parent.parent.parent / template_path[1:]
 
+        # 记录模板原有的sheet页名称
+        original_sheets = []
+
+        # 如果有模板文件路径，则基于模板创建
+        if template_path and Path(template_path).exists():
+            wb = load_workbook(template_path)
+            original_sheets = wb.sheetnames.copy() # 保存模板原有的sheet页名称
+            logger.info(f"基于模板文件创建Excel: {template_path}")
+        else:
+            wb = Workbook()
+            self._remove_default_sheet(wb)
+            if template_path:
+                logger.warning(f"模板文件不存在，将创建新的Excel文件: {template_path}")
+        # 生成新的sheet页
+        new_sheets = []
         for sheet_name, content in datas.items():
-            ws = self._create_worksheet(wb, sheet_name)
+            if sheet_name in wb.sheetnames:
+                # 如果工作表已存在，创建带时间戳的新工作表名
+                timestamp = datetime.now().strftime('%H%M%S')
+                new_sheet_name = f"{sheet_name}_{timestamp}"
+                logger.info(f"工作表 '{sheet_name}' 已存在，将创建新工作表: {new_sheet_name}")
+                ws = self._create_worksheet(wb, new_sheet_name)
+                new_sheets.append(new_sheet_name)
+            else:
+                ws = self._create_worksheet(wb, sheet_name)
+                new_sheets.append(sheet_name)
+
             self._process_sheet_content(ws, content, max_col_width)
+
+            # 如果有模板，将模板原有的sheet页移动到所有新sheet页的后面
+        if original_sheets:
+            self._move_original_sheets_to_end(wb, original_sheets, new_sheets)
 
         return self._save_workbook(wb, filename)
 
@@ -136,5 +170,25 @@ class ExcelGenerator:
         if 'Sheet' in wb.sheetnames:
             del wb['Sheet']
 
+    def _move_original_sheets_to_end(self, wb: Workbook, original_sheets: list, new_sheets: list):
+        """将模板原有的sheet页移动到所有新sheet页的后面"""
+        # 获取当前所有sheet页的顺序
+        current_order = wb.sheetnames
+
+        # 创建新的sheet页顺序：新sheet页在前，模板原有sheet页在后
+        new_order = []
+
+        # 先添加所有新生成的sheet页（保持原有顺序）
+        for sheet_name in current_order:
+            if sheet_name in new_sheets:
+                new_order.append(sheet_name)
+
+        # 再添加模板原有的sheet页（保持原有顺序）
+        for sheet_name in current_order:
+            if sheet_name in original_sheets:
+                new_order.append(sheet_name)
+
+        # 重新排序sheet页
+        wb._sheets.sort(key=lambda ws: new_order.index(ws.title))
 
 

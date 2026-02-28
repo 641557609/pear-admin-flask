@@ -180,6 +180,7 @@
 
                 <div id="file_config">
                 {% if task.task_template.template_type == "查询语句" %}
+
                     <div class="layui-form-item">
                         <label class="layui-form-label"><b>Excel文件名</b></label>
                         <div class="layui-input-group">
@@ -225,6 +226,37 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Excel模板选择 -->
+                    <div class="layui-form-item">
+                        <label class="layui-form-label"><b>使用Excel模板</b></label>
+                        <div class="layui-input-block">
+                            <input type="radio" name="use_excel_template" value="0" title="不使用"
+                                {% if not task.file_config.get('use_excel_template') or task.file_config.get('use_excel_template') == '0' %}checked{% endif %}
+                                lay-filter="excel_template_filter">
+                            <input type="radio" name="use_excel_template" value="1" title="使用"
+                                {% if task.file_config.get('use_excel_template') == '1' %}checked{% endif %}
+                                lay-filter="excel_template_filter">
+                        </div>
+                    </div>
+
+                    <!-- Excel模板选择下拉框 -->
+                    <div class="layui-form-item" id="excel_template_select"
+                         style="{% if not task.file_config.get('use_excel_template') or task.file_config.get('use_excel_template') == '0' %}display: none;{% endif %}">
+                        <label class="layui-form-label"><b>选择Excel模板</b></label>
+                        <div class="layui-input-block">
+                            <select name="excel_template_id" lay-verify="required" lay-search>
+                                <option value="">请选择Excel模板</option>
+                                {% for template in excel_templates %}
+                                    <option value="{{ template.id }}"
+                                        {% if task.file_config.get('excel_template_id') == template.id|string %}selected{% endif %}>
+                                        {{ template.original_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="layui-form-item">
                         <label class="layui-form-label"><b>选择接收人</b></label>
                         <div class="layui-input-block">
@@ -263,6 +295,20 @@
         let $ = layui.jquery
         let laydate = layui.laydate;
         let transfer = layui.transfer;
+
+        // Excel模板选择切换
+        form.on('radio(excel_template_filter)', function(data){
+            const useTemplate = data.value === '1';
+            $('#excel_template_select').toggle(useTemplate);
+            if (!useTemplate) {
+                $('select[name="excel_template_id"]').val('');
+            }
+            form.render();
+        });
+
+        // 初始化Excel模板状态
+        const useExcelTemplate = $('input[name="use_excel_template"]:checked').val() === '1';
+        $('#excel_template_select').toggle(useExcelTemplate);
 
         // 根据变量类型生成内容模块
         form.on('select(var-type)', function (data) {

@@ -65,12 +65,16 @@ class BaseConfig:
     SQL_SERVER_DATABASE = 'hxlh'  # 数据库名
     SQL_SERVER_USERNAME= 'user_fufangpeng'  # 用户名
     SQL_SERVER_PASSWORD = 'Teenrun0124#*!'  # 密码
-    SQL_SERVER_URI = f'mssql+pyodbc://{SQL_SERVER_USERNAME}:{SQL_SERVER_PASSWORD}@{SQL_SERVER_HOST}/{SQL_SERVER_DATABASE}?driver=ODBC+Driver+17+for+SQL+Server'
+    SQL_SERVER_URI = f'mssql+pyodbc://{SQL_SERVER_USERNAME}:{SQL_SERVER_PASSWORD}@{SQL_SERVER_HOST}/{SQL_SERVER_DATABASE}?driver=ODBC+Driver+13+for+SQL+Server'
     SQL_SERVER_POOL_SIZE = 3  # 连接池大小
     SQL_SERVER_POOL_RECYCLE = 18000  # 连接回收时间（秒）
     SQL_SERVER_POOL_TIMEOUT = 10  # 获取连接超时时间
     # 默认日志等级
-    LOG_LEVEL = logging.WARN
+    # LOG_LEVEL = logging.WARN
+    # 调试日志等级
+    LOG_LEVEL = logging.DEBUG
+
+
 
     """
     flask-mail配置

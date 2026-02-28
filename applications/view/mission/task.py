@@ -1,7 +1,7 @@
 from applications.extensions import db
 from flask import Blueprint, render_template, request
 from sqlalchemy.orm import joinedload
-from applications.models import ScheduledTask, TaskTemplate, Employees
+from applications.models import ScheduledTask, TaskTemplate, Employees, AdminExcel
 from applications.common.utils.rights import authorize
 from applications.common.utils.validate import str_escape
 from applications.common.utils.http import table_api, success_api, fail_api
@@ -67,7 +67,9 @@ def add(id=None):
         })
 
     employees = Employees.query.filter(Employees.status==1)
-    return render_template('mission/task/add.html', data=data, employees=employees)
+    # 获取所有Excel模板
+    excel_templates = AdminExcel.query.filter(AdminExcel.status == 1).all()
+    return render_template('mission/task/add.html', data=data, employees=employees, excel_templates=excel_templates)
 
 # 任务增加
 @bp.post('/save')
@@ -92,6 +94,10 @@ def save():
             for v in variables
         ]
 
+        # Excel模板处理
+        use_excel_template = data_field.get('use_excel_template') == '1'
+        excel_template_id = data_field.get('excel_template_id') if use_excel_template else None
+
         # 构建任务数据
         task_data = {
             'task_name': data_field.get('task_name'),
@@ -99,7 +105,9 @@ def save():
                 'file_name': data_field.get('file_name'),
                 'sheet_num': data_field.get('sheet_num'),
                 'title_list': data_field.get('title_list'),
-                'column_name': data_field.get('column_name')
+                'column_name': data_field.get('column_name'),
+                'use_excel_template': use_excel_template,
+                'excel_template_id': excel_template_id
             },
             'schedule_config': {
                 'trigger_mode': data_field.get('trigger_mode'),
@@ -109,7 +117,8 @@ def save():
             },
             'variables_config': variables_config,
             'enable': 1,
-            'template_id': template_id
+            'template_id': template_id,
+            'excel_template_id': excel_template_id
         }
 
         # 数据库事务
@@ -220,8 +229,9 @@ def edit(id):
             'variables': list(variables)
         })
     employees = Employees.query.filter(Employees.status==1)
-
-    return render_template('mission/task/edit.html', task=task, data=data, employees=employees)
+    # 获取所有Excel模板
+    excel_templates = AdminExcel.query.filter(AdminExcel.status == 1).all()
+    return render_template('mission/task/edit.html', task=task, data=data, employees=employees, excel_templates=excel_templates)
 
 # 任务更新
 @bp.post('/update')
@@ -247,6 +257,10 @@ def update():
             for v in variables
         ]
 
+        # Excel模板处理
+        use_excel_template = data_field.get('use_excel_template') == '1'
+        excel_template_id = data_field.get('excel_template_id') if use_excel_template else None
+
         # 构建任务数据
         schedule_config = {
             'trigger_mode': data_field.get('trigger_mode'),
@@ -259,13 +273,16 @@ def update():
             'file_name': data_field.get('file_name'),
             'sheet_num': data_field.get('sheet_num'),
             'title_list': data_field.get('title_list'),
-            'column_name': data_field.get('column_name')
+            'column_name': data_field.get('column_name'),
+            'use_excel_template': use_excel_template,
+            'excel_template_id': excel_template_id
         }
         # 更新任务
         task.task_name = data_field.get('task_name')
         task.file_config = file_config
         task.schedule_config = schedule_config
         task.variables_config = variables_config
+        task.excel_template_id = excel_template_id
 
         # 批量处理接收人
         job_numbers = [emp['value'] for emp in selected_employees]

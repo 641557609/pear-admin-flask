@@ -11,7 +11,11 @@ class ScheduledTask(db.Model):
     enable = db.Column(db.Integer, comment='是否开启', nullable=False, default=1)
     # 关联模板
     template_id = db.Column(db.Integer, db.ForeignKey('task_template.id'), comment='模板ID', nullable=False)
+    # 关联Excel模板
+    excel_template_id = db.Column(db.Integer, db.ForeignKey('admin_excel.id'), comment='Excel模板ID', nullable=True)
     # 关联接收人
     employees = db.relationship("Employees", secondary="task_employee", backref="scheduled_task", lazy=True)
     # 关联日志
     execution_log = db.relationship('ExecutionLog', backref='scheduled_task', cascade="all, delete-orphan")
+    # 关联Excel模板
+    excel_template = db.relationship("AdminExcel", backref="scheduled_tasks", lazy=True, foreign_keys=[excel_template_id])

@@ -101,8 +101,6 @@ class TeenrunERPProvider(NotificationProvider):
     def _parse_response(self, response_data: Dict) -> Dict:
         """解析ERP接口响应"""
         # 示例解析逻辑，需根据实际接口响应调整
-        print(response_data)
-
         if "d" not in response_data:
             raise InvalidResponseError("无效的接口响应格式")
 

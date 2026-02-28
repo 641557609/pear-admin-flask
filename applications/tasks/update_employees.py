@@ -2,9 +2,7 @@ from applications.extensions import db
 from applications.models import Employees
 from sqlalchemy.orm import load_only
 from applications.extensions.init_apscheduler import scheduler
-from applications.services.scheduler_service import executor
-import traceback
-# traceback.print_exc()
+from applications.services.scheduler_service import get_executor
 
 @scheduler.task('cron', id='update_employees', name='update_employees', day='28')
 def update_employees():
@@ -15,7 +13,7 @@ def update_employees():
                      FROM sys_user 
                      WHERE status = '1' 
                      AND ISNULL(jobNum, '') != ''"""
-            result = executor.execute(sql=sql)
+            result = get_executor().execute(sql=sql)
             # 构建当前在职人员字典 {工号: 人员信息}
             current_employees = {row[1]:{"name": row[0],"status": int(row[2])} for row in result[1]["data"]}
             current_job_numbers = set(current_employees.keys())
@@ -68,5 +66,3 @@ def update_employees():
         except Exception as e:
             db.session.rollback()
             print(f"发生错误：{e}")
-            traceback.print_exc()
-            # 建议添加更完善的错误处理（如日志记录）
