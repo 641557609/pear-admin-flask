@@ -55,7 +55,7 @@ class BaseConfig:
     MYSQL_PASSWORD = "123456"
     MYSQL_HOST = "127.0.0.1"
     MYSQL_PORT = 3306
-    MYSQL_DATABASE = "PearAdminFlask2"  # 数据库名
+    MYSQL_DATABASE = "PearAdminFlask"  # 数据库名
     # 数据库的配置信息
     SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MYSQL_USERNAME}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}?charset=utf8mb4"
 
@@ -125,4 +125,4 @@ class BaseConfig:
     # 设置定时任务的执行器（默认是最大执行数量为10的线程池）
     SCHEDULER_EXECUTORS = {'default': {'type': 'threadpool', 'max_workers': 10}}
     # 另外flask-apscheduler内有日志记录器。name为apscheduler.scheduler和apscheduler.executors.default。如果需要保存日志，则需要对此日志记录器进行配置
-    JSONIFY_PRETTYPRINT_REGULAR = False
+    JSONIFY_PRETTYPRINT_REGULAR = True
