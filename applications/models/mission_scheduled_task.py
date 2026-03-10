@@ -16,6 +16,8 @@ class ScheduledTask(db.Model):
     # 关联接收人
     employees = db.relationship("Employees", secondary="task_employee", backref="scheduled_task", lazy=True)
     # 关联日志
-    execution_log = db.relationship('ExecutionLog', backref='scheduled_task', cascade="all, delete-orphan")
+    execution_log = db.relationship('ExecutionLog', backref='scheduled_task', cascade="save-update, merge")
     # 关联Excel模板
-    excel_template = db.relationship("AdminExcel", backref="scheduled_tasks", lazy=True, foreign_keys=[excel_template_id])
+    excel_template = db.relationship("AdminExcel", backref="scheduled_tasks", lazy=True,foreign_keys=[excel_template_id])
+    # 撤回功能相关字段
+    last_process_query_keys = db.Column(JSON, comment='上一次发送的文件标记列表', nullable=True)

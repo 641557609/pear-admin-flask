@@ -1,10 +1,12 @@
 # 消息发送逻辑
 import base64
+import logging
 from typing import Dict, List
 import requests
 from pathlib import Path
-from flask import current_app
 from applications.config import BaseConfig
+# 配置日志
+logger = logging.getLogger(__name__)
 
 class NotificationProvider:
     """通知服务抽象基类"""
@@ -16,6 +18,9 @@ class NotificationProvider:
         :param receivers: 接收人ID列表
         :return: 发送结果字典
         """
+        raise NotImplementedError
+    # 撤回文件接口
+    def revoke_files(self, process_query_keys: List[str]) -> Dict:
         raise NotImplementedError
 
     def send_message(self, content: str, receivers: List[str], **kwargs) -> Dict:
@@ -33,7 +38,7 @@ class TeenrunERPProvider(NotificationProvider):
         if not file_path.exists():
             raise FileNotFoundError(f"文件不存在: {file_path}")
 
-        if file_path.stat().st_size > 10 * 1024 * 1024:  # 10MB限制
+        if file_path.stat().st_size > 20 * 1024 * 1024:  # 20MB限制
             raise ValueError("文件大小超过限制")
 
         with file_path.open('rb') as f:
@@ -99,6 +104,43 @@ class TeenrunERPProvider(NotificationProvider):
             })
         return result_template
 
+    def revoke_files(self, process_query_keys: List[str]) -> Dict:
+        """
+            撤回文件接口
+            :param process_query_keys: 要撤回的文件processQueryKey列表
+            :return: 撤回结果字典
+        """
+        result = {
+            "success": True,
+            "message": f"成功撤回 {len(process_query_keys)} 个文件",
+            "revoked_count": len(process_query_keys),
+            "failed_count": 0
+        }
+
+        try:
+            logger.info(f"正在撤回文件，processQueryKeys: {process_query_keys}")
+
+            # 构建请求参数
+            payload = {
+                "processQueryKeys": process_query_keys
+            }
+
+            response = requests.post(
+                f"{self.base_url}/DingtalkService.asmx/RecallBatchDingMessage",
+                json=payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            response.raise_for_status()
+            return result
+
+        except Exception as e:
+            result["success"] = False
+            result["message"] = f"文件撤回失败: {str(e)}"
+            result["failed_count"] = len(process_query_keys)
+            logger.error(f"文件撤回失败: {str(e)}")
+            return result
+
     def _parse_response(self, response_data: Dict) -> Dict:
         """解析ERP接口响应"""
         # 示例解析逻辑，需根据实际接口响应调整
@@ -145,6 +187,22 @@ class NotificationService:
             raise ValueError(f"不支持的通知渠道: {channel}")
 
         return provider.send_file(file_path, receivers, **kwargs)
+
+    def revoke_files(
+            self,
+            process_query_keys: List[str],
+            channel: str,
+            **kwargs
+    ) -> Dict:
+        """
+        撤回文件统一接口
+        :param process_query_keys: 要撤回的文件processQueryKey列表
+        :param channel: 通知渠道
+        """
+        provider = self.providers.get(channel)
+        if not provider:
+            raise ValueError(f"不支持的通知渠道: {channel}")
+        return provider.revoke_files(process_query_keys)
 
     # 后续扩展方法
     # def send_message(self, content, receivers, channel="dingtalk"):

@@ -16,6 +16,7 @@ from applications.services.variable_service import VariableHandler
 from applications.services.logger_service import ExecutionLogger
 from applications.extensions.init_apscheduler import scheduler
 from sqlalchemy import create_engine
+from applications.extensions import db
 
 # 配置日志
 logger = logging.getLogger(__name__)
@@ -100,7 +101,7 @@ def job(task_id, **kwargs):
             if task.task_template.template_type == "更新语句":
                 _handle_update_statement(task, executed_template, variables, logger_instance, start_time)
             elif task.task_template.template_type == "查询语句":
-                _handle_query_statement(task, executed_template, variables, logger_instance, start_time)
+                _handle_query_statement(task, executed_template, variables, logger_instance, start_time, **kwargs)
             else:
                 raise ValueError(f"未知的模板类型: {task.task_template.template_type}")
 
@@ -179,9 +180,36 @@ def _handle_update_statement(task, executed_template: str, variables: Dict, logg
 
 
 def _handle_query_statement(task, executed_template: str, variables: Dict, logger_instance: ExecutionLogger,
-                            start_time: datetime):
+                            start_time: datetime, **kwargs):
     """处理查询语句"""
     logger.info(f"开始执行查询语句，任务ID: {task.task_id}")
+
+    # 检查是否需要撤回上次发送的文件
+    revoke_last_files = kwargs.get('revoke_last_files', False)
+    if revoke_last_files:
+        logger.info(f"用户选择撤回上次发送的文件，任务ID: {task.task_id}")
+        try:
+            # 获取上次发送的文件processQueryKeys
+            last_process_query_keys = task.last_process_query_keys or []
+            if last_process_query_keys:
+                logger.info(f"正在撤回上次发送的 {len(last_process_query_keys)} 个文件...")
+
+                # 调用通知服务撤回文件
+                revoke_result = get_notification_service().revoke_files(
+                    process_query_keys=last_process_query_keys,
+                    channel="teenrun"
+                )
+
+                if revoke_result["success"]:
+                    logger.info(f"文件撤回成功，撤回了 {revoke_result.get('revoked_count', 0)} 个文件")
+                else:
+                    logger.warning(f"文件撤回失败: {revoke_result.get('message', '未知错误')}")
+            else:
+                logger.info(f"没有找到上次发送的文件记录，跳过撤回步骤")
+        except Exception as e:
+            logger.error(f"文件撤回失败: {str(e)}")
+            # 即使撤回失败，也继续执行后续任务
+            logger.info(f"撤回失败，继续执行新任务")
 
     try:
         # 验证文件配置
@@ -201,17 +229,23 @@ def _handle_query_statement(task, executed_template: str, variables: Dict, logge
         )
         # 生成和发送报告
         report_file = process_report_generation(task, query_results)
-        report_path = process_report_sending(report_file)
+        send_result  = process_report_sending(report_file)
 
+        # 更新任务的文件发送记录（用于后续撤回）
+        if send_result.get('process_query_keys'):
+            task.last_process_query_keys = send_result['process_query_keys']
+            task.last_execution_time = datetime.now()
+            db.session.commit()
+            logger.info(f"已更新任务的文件发送记录，processQueryKeys: {send_result['process_query_keys']}")
         # 记录执行日志
         executed_sql = get_executor().return_executed_sql(executed_template, variables)
+        result_summary = f"发送了 {send_result['total_files']} 个文件，成功 {send_result['success_count']} 个"
         logger_instance.commit(
             task=task,
             executed_sql=executed_sql,
-            result_path=report_path[:100],
+            result_path=result_summary,
             start_time=start_time
         )
-
         logger.info(f"查询语句执行完成，任务ID: {task.task_id}")
 
     except json.JSONDecodeError as e:
@@ -469,7 +503,7 @@ def process_direct_split_generation(query_results: Dict, column_name: str, file_
 
 
 
-def process_report_sending(report_files: Dict[str, Path]) -> str:
+def process_report_sending(report_files: Dict[str, Path]) -> dict:
     """处理所有文件的发送逻辑"""
     # 找出相同路径的键并拼接
     path_to_keys = {}
@@ -479,10 +513,29 @@ def process_report_sending(report_files: Dict[str, Path]) -> str:
             path_to_keys[path_str] = []
         path_to_keys[path_str].append(key)
     report_path = ''
+
+    send_results = []
+    all_process_query_keys = []
+
     for file_path, receivers in path_to_keys.items():
-        report_path += str(file_path) + ','
-        send_report_with_retry(str(file_path), receivers)
-    return report_path
+        # 发送文件并获取结果
+        send_result = send_report_with_retry(str(file_path), receivers)
+        send_results.append({
+            'file_path': str(file_path),
+            'receivers': receivers,
+            'result': send_result
+        })
+
+        if send_result.get("success"):
+            mock_process_query_key = send_result.get("message", "")
+            all_process_query_keys.append(mock_process_query_key)
+
+    return {
+        'send_results': send_results,
+        'process_query_keys': all_process_query_keys,
+        'total_files': len(send_results),
+        'success_count': sum(1 for r in send_results if r['result'].get('success'))
+    }
 
 # 处理调度时间
 def create_scheduler_trigger(schedule_config: Dict):

@@ -15,6 +15,7 @@ class ScheduledTaskSchema(SQLAlchemyAutoSchema):
     receiver = fields.Method("get_employee_names")
     template_name = fields.Method("get_template_name")
     trigger_mode = fields.Method("get_trigger_mode")
+    template_type = fields.Method("get_template_type")
     run_time = fields.Method("get_run_time")
     enable = fields.Method("get_enable")
 
@@ -27,6 +28,11 @@ class ScheduledTaskSchema(SQLAlchemyAutoSchema):
         if obj.task_template:
             return obj.task_template.template_name
         return '出错啦'
+
+    def get_template_type(self, obj):
+        if obj.task_template:
+            return obj.task_template.template_type
+        return '未知类型'
 
     def get_trigger_mode(self, obj):
         if obj.schedule_config['trigger_mode'] == 'by_plan':
@@ -41,7 +47,6 @@ class ScheduledTaskSchema(SQLAlchemyAutoSchema):
     def get_run_time(self, obj):
         if obj.schedule_config['trigger_mode'] == 'by_user':
             return '--'
-        print(str(obj.task_id))
         job = scheduler.get_job(str(obj.task_id))
         if not job:
             return '出错啦'

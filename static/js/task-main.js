@@ -12,6 +12,7 @@ layui.use(['table', 'form', 'jquery', 'popup', 'common'], function () {
             {title: '任务编号', field: 'task_id', align: 'center', sort: true},
             {title: '任务名称', field: 'task_name', align: 'center', width: 100, sort: true},
             {title: '模板名称', field: 'template_name', align: 'center', sort: true},
+            {title: '模板类型', field: 'template_type', align: 'center', sort: true},
             {title: '触发方式', field: 'trigger_mode', align: 'center', sort: true},
             {title: '任务开启/关闭', field: 'enable', align: 'center', templet: '#task-enable'},
             {title: '接收人', field: 'receiver', align: 'center'},
@@ -106,18 +107,77 @@ layui.use(['table', 'form', 'jquery', 'popup', 'common'], function () {
         })
     }
 
+    // window.run = function (obj) {
+    //     // 显示“正在运行”弹窗（1秒后自动关闭）
+    //     let loading = layer.msg('正在运行...', {
+    //         icon: 16,        // 加载图标
+    //         time: 200,      // 0.5秒后自动关闭
+    //         shade: 0.3       // 遮罩透明度
+    //     });
+    //
+    //     // 异步调用后端接口
+    //     $.ajax({
+    //         url: MODULE_PATH + 'run/' + obj.data['task_id'],
+    //         type: 'POST',
+    //         success: function (result) {
+    //             layer.close(loading);
+    //             if (result.success) {
+    //                 layer.msg(result.msg, {icon: 1, time: 1000});
+    //             } else {
+    //                 layer.msg(result.msg, {icon: 2, time: 2000});
+    //             }
+    //         },
+    //         error: function () {
+    //             layer.msg('请求失败，请检查网络', {icon: 2, time: 2000});
+    //         }
+    //     });
+    // }
     window.run = function (obj) {
-        // 显示“正在运行”弹窗（1秒后自动关闭）
+        // 判断任务类型，只有查询类型才显示撤回确认
+        if (obj.data['template_type'] === '查询语句') {
+            // 显示撤回确认对话框
+            layer.confirm('检测到这是查询任务，是否撤回上次发送的文件？', {
+                title: '文件撤回确认',
+                btn: ['撤回并运行', '直接运行', '取消'],
+                btn1: function(index) {
+                    // 用户选择"撤回并运行"
+                    layer.close(index);
+                    executeRunTask(obj.data['task_id'], true);
+                },
+                btn2: function(index) {
+                    // 用户选择"直接运行"
+                    layer.close(index);
+                    executeRunTask(obj.data['task_id'], false);
+                },
+                btn3: function(index) {
+                    // 用户选择"取消"
+                    layer.close(index);
+                    // 不执行任何操作
+                }
+            });
+        } else {
+            // 非查询任务，直接运行
+            executeRunTask(obj.data['task_id'], false);
+        }
+    }
+
+    // 封装任务运行逻辑
+    function executeRunTask(taskId, revokeLastFiles) {
+        // 显示"正在运行"弹窗（1秒后自动关闭）
         let loading = layer.msg('正在运行...', {
             icon: 16,        // 加载图标
             time: 200,      // 0.5秒后自动关闭
             shade: 0.3       // 遮罩透明度
         });
 
-        // 异步调用后端接口
+        // 异步调用后端接口，带上撤回参数
         $.ajax({
-            url: MODULE_PATH + 'run/' + obj.data['task_id'],
+            url: MODULE_PATH + 'run/' + taskId,
             type: 'POST',
+            data: JSON.stringify({
+                revoke_last_files: revokeLastFiles
+            }),
+            contentType: 'application/json',
             success: function (result) {
                 layer.close(loading);
                 if (result.success) {
@@ -127,6 +187,7 @@ layui.use(['table', 'form', 'jquery', 'popup', 'common'], function () {
                 }
             },
             error: function () {
+                layer.close(loading);
                 layer.msg('请求失败，请检查网络', {icon: 2, time: 2000});
             }
         });

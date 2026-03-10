@@ -319,13 +319,18 @@ def update():
 @authorize("mission:task:run", log=True)
 def run_task(task_id):
     try:
+        # 获取请求参数
+        req_data = request.get_json(force=True) or {}
+        revoke_last_files = req_data.get('revoke_last_files', False)
+
         # 获取任务对象
         task = ScheduledTask.query.get(task_id)
         if not task:
             return fail_api(msg="任务不存在")
 
         # 调用调度器执行任务
-        job(task_id=task.task_id, trigger_mode="手动执行")
+        # job(task_id=task.task_id, trigger_mode="手动执行")
+        job(task_id=task.task_id, trigger_mode="手动执行", revoke_last_files=revoke_last_files)
 
         return success_api(msg="任务已执行完毕")
     except Exception as e:
