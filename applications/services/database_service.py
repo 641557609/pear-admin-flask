@@ -3,7 +3,7 @@ from sqlalchemy import text
 import re
 
 class SQLServerExecutor:
-    """专用于SQL Server的查询执行器（直接使用引擎连接）"""
+    """专用于SQL Server的查询、更新执行器（直接使用引擎连接）"""
 
     def __init__(self, engine):
         self.engine = engine  # 直接保存引擎实例

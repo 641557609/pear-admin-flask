@@ -87,6 +87,7 @@ class TeenrunERPProvider(NotificationProvider):
                 )
                 response.raise_for_status()
                 result_template.update(self._parse_response(response.json()))
+                print(result_template)
                 result_template["success_receivers"] = [r for r in receivers ]
             except requests.exceptions.RequestException as e:
                 raise ServiceUnavailableError(f"服务不可用: {str(e)}")
@@ -105,7 +106,7 @@ class TeenrunERPProvider(NotificationProvider):
             raise InvalidResponseError("无效的接口响应格式")
 
         return {
-            "success": "成功" in response_data["d"] or "推送完成" in response_data["d"],
+            "success": response_data["d"] is not None,
             "message": response_data["d"],
         }
 

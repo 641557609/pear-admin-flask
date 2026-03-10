@@ -1,6 +1,5 @@
 import logging
 from datetime import timedelta
-
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 
 
@@ -56,7 +55,7 @@ class BaseConfig:
     MYSQL_PASSWORD = "123456"
     MYSQL_HOST = "127.0.0.1"
     MYSQL_PORT = 3306
-    MYSQL_DATABASE = "PearAdminFlask2"
+    MYSQL_DATABASE = "PearAdminFlask2"  # 数据库名
     # 数据库的配置信息
     SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MYSQL_USERNAME}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}?charset=utf8mb4"
 
@@ -111,7 +110,7 @@ class BaseConfig:
     """
     Flask_Apscheduler的配置
     """
-    # 使用数据库存储定时任务（默认是存储在内存中）
+    # 使用数据库存储定时任务（默认是存储在内存中，重启或关闭应用后任务会消失）
     SCHEDULER_JOBSTORES = {'default': SQLAlchemyJobStore(url=SQLALCHEMY_DATABASE_URI)}
     # 设置时区，时区不一致会导致定时任务的时间错误
     SCHEDULER_TIMEZONE = 'Asia/Shanghai'

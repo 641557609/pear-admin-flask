@@ -30,6 +30,26 @@
                     </div>
                 </div>
                 <div class="layui-form-item">
+                    <label class="layui-form-label">变量提取</label>
+                    <div class="layui-input-block">
+                        <button type="button" class="layui-btn layui-btn-sm" id="extract-variables">
+                            <i class="layui-icon layui-icon-search"></i>
+                            提取变量
+                        </button>
+                    </div>
+                </div>
+                <div class="layui-form-item" id="variables-container" style="display: none;">
+                    <label class="layui-form-label">提取的变量</label>
+                    <div class="layui-input-block">
+                        <div id="extracted-variables" class="layui-card">
+                            <div class="layui-card-header">检测到的变量列表</div>
+                            <div class="layui-card-body">
+                                <div id="variables-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
                     <label class="layui-form-label">备注</label>
                     <div class="layui-input-block">
                         <textarea name="remark" id="remark" style="height: 10px;overflow:visible;resize:none" placeholder="备注" class="layui-textarea"></textarea>
@@ -56,38 +76,6 @@
     </div>
 </form>
 {% include 'system/common/footer.html' %}
-<script>
-    layui.use(['form', 'jquery'], function () {
-
-        let form = layui.form
-        let $ = layui.jquery
-
-        form.on('submit(template-save)', function (data) {
-            $.ajax({
-                url: '/mission/template/save',
-                data: JSON.stringify(data.field),
-                dataType: 'json',
-                contentType: 'application/json',
-                type: 'post',
-                success: function (result) {
-                    if (result.success) {
-                        layer.msg(result.msg, {icon: 1, time: 1000}, function () {
-                            parent.layer.close(parent.layer.getFrameIndex(window.name))//关闭当前页
-                            parent.layui.table.reload('template-table')
-                        })
-                    } else {
-                        layer.msg(result.msg, {icon: 2, time: 1000})
-                    }
-                }
-            })
-            return false
-        })
-
-        $('#cancel').on('click', function(){
-            parent.layer.close(parent.layer.getFrameIndex(window.name))//关闭当前页
-            return false;
-        })
-    })
-</script>
+<script src="{{ url_for('static', filename='js/template-add.js') }}"></script>
 </body>
 </html>

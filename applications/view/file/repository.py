@@ -56,6 +56,7 @@ def table_data():
                     continue
 
             files.append(file_data)
+    files.sort(key=lambda x: x["ctime"], reverse=True)
     total = len(files)
     start = (page - 1) * limit
     end = start + limit

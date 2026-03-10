@@ -41,9 +41,10 @@ class ScheduledTaskSchema(SQLAlchemyAutoSchema):
     def get_run_time(self, obj):
         if obj.schedule_config['trigger_mode'] == 'by_user':
             return '--'
+        print(str(obj.task_id))
         job = scheduler.get_job(str(obj.task_id))
         if not job:
-            return obj.schedule_config['picker_time']
+            return '出错啦'
         next_run_time = job.next_run_time
         if next_run_time is None:
             return '任务已暂停'

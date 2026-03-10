@@ -29,11 +29,11 @@ def table():
     if task_name:
         filters.append(ExecutionLog.task_name == task_name)
     if start_date:
-        filters.append(ExecutionLog.run_time >= start_date)
+        filters.append(ExecutionLog.run_time >= datetime.strptime(start_date, '%Y-%m-%d'))
     if end_date:
         new_end_date = (datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
         filters.append(ExecutionLog.run_time <= new_end_date)
-    logger = ExecutionLog.query.filter(*filters).layui_paginate()
+    logger = ExecutionLog.query.filter(*filters).order_by(ExecutionLog.run_time.desc()).layui_paginate()
     return table_api(data=ExecutionLogSchema(many=True).dump(logger), count=logger.total)
 
 # 日志删除
