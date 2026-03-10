@@ -105,7 +105,7 @@ class BaseConfig:
 
     # 发送接口
     TEENRUN_API_URL = "http://erp.winworld.top:9000/erp"
-    NOTIFICATION_RETRIES = 1    #重试次数
+    NOTIFICATION_RETRIES = 1    # 通知发送失败重试次数
 
     """
     Flask_Apscheduler的配置
